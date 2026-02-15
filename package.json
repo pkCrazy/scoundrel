@@ -1,10 +1,17 @@
 {
   "scripts": {
+    "css": "npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css --watch",
+    "css:build": "npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css --minify",
+    "dev": "npm run css & shadow-cljs watch game",
     "test": "shadow-cljs compile test && node tests/tests.js"
   },
   "dependencies": {
     "process": "^0.11.10",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.18",
+    "tailwindcss": "^4.1.18"
   }
 }
