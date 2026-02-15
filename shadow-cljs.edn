@@ -1,0 +1,10 @@
+;; shadow-cljs configuration
+{:source-paths ["src" "test"]
+ :dependencies [[reagent "2.0.1"]]
+
+ :builds {:game {:target :browser
+                 :modules {:main {:init-fn game.ui/init}}
+                 :devtools {:http-root "public"
+                            :http-port 3000}}
+          :test {:target :node-test
+                 :output-to "tests/tests.js"}}}
