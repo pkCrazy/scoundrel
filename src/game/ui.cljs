@@ -21,6 +21,9 @@
 (defn end-room! []
   (swap! game-state core/end-room))
 
+(defn escape-room! []
+  (swap! game-state core/escape-room))
+
 ;; ---------------------------------------------------------------------------
 ;; Display helpers
 ;; ---------------------------------------------------------------------------
@@ -192,7 +195,11 @@
      (when (and (= :room-action phase) (core/can-skip-remaining? gs))
        [:button {:on-click end-room!
                  :class "px-6 py-3 text-sm font-bold rounded-xl bg-gray-700 hover:bg-gray-600 transition-colors"}
-        "Skip & End Room"])]))
+        "Skip & End Room"])
+     (when (and (= :room-action phase) (core/can-escape? gs))
+       [:button {:on-click escape-room!
+                 :class "px-6 py-3 text-sm font-bold rounded-xl bg-yellow-700 hover:bg-yellow-600 transition-colors"}
+        "Escape Room"])]))
 
 (defn game-over-screen []
   (let [gs @game-state

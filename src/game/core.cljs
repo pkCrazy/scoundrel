@@ -57,6 +57,7 @@
    :weapon-last-used     nil
    :room-resolved        0
    :room-monsters-skipped 0
+   :escaped-last-room    false
    :phase                :room-draw
    :result               nil})
 
@@ -201,6 +202,32 @@
   (-> game
       (update :discard into (:room game))
       (assoc :room []
+             :escaped-last-room false
+             :phase :room-draw)))
+
+;; ---------------------------------------------------------------------------
+;; Escape
+;; ---------------------------------------------------------------------------
+
+(defn can-escape?
+  "Returns true if the player can escape the current room.
+   The player can escape if:
+   - Phase is :room-action
+   - No cards have been resolved yet (room-resolved = 0)
+   - The player did not escape the previous room"
+  [game]
+  (and (= :room-action (:phase game))
+       (zero? (:room-resolved game))
+       (not (:escaped-last-room game))))
+
+(defn escape-room
+  "Escapes the current room: all room cards go to the bottom of the dungeon,
+   phase → :room-draw, and :escaped-last-room is set to true."
+  [game]
+  (-> game
+      (update :dungeon into (:room game))
+      (assoc :room []
+             :escaped-last-room true
              :phase :room-draw)))
 
 ;; ---------------------------------------------------------------------------
@@ -227,7 +254,9 @@
                                             base)))
                                       (:room game))
                        end-action   (when (can-skip-remaining? game)
-                                      [{:action :end-room}])]
-                   (vec (concat card-actions end-action)))
+                                      [{:action :end-room}])
+                       escape-action (when (can-escape? game)
+                                       [{:action :escape-room}])]
+                   (vec (concat card-actions end-action escape-action)))
     ;; :game-over or any other phase
     []))

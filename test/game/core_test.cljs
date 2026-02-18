@@ -320,6 +320,90 @@
       (is (= :room-draw (:phase result))))))
 
 ;; ---------------------------------------------------------------------------
+;; Escape
+;; ---------------------------------------------------------------------------
+
+(deftest test-can-escape
+  (testing "Can escape at start of room (nothing resolved, didn't escape last room)"
+    (let [game (-> (core/new-game-with-deck [{:suit :clubs :rank 2}
+                                              {:suit :hearts :rank 3}
+                                              {:suit :diamonds :rank 4}
+                                              {:suit :spades :rank 5}
+                                              {:suit :clubs :rank 6}
+                                              {:suit :hearts :rank 7}
+                                              {:suit :diamonds :rank 8}
+                                              {:suit :spades :rank 9}])
+                   (core/deal-room))]
+      (is (core/can-escape? game))))
+  (testing "Cannot escape after resolving a card"
+    (let [game (-> (core/new-game-with-deck [{:suit :hearts :rank 2}
+                                              {:suit :hearts :rank 3}
+                                              {:suit :diamonds :rank 4}
+                                              {:suit :spades :rank 5}
+                                              {:suit :clubs :rank 6}])
+                   (core/deal-room)
+                   (core/resolve-card 0 false))]
+      (is (not (core/can-escape? game)))))
+  (testing "Cannot escape if escaped last room"
+    (let [game (-> (core/new-game-with-deck [{:suit :clubs :rank 2}
+                                              {:suit :hearts :rank 3}
+                                              {:suit :diamonds :rank 4}
+                                              {:suit :spades :rank 5}
+                                              {:suit :clubs :rank 6}
+                                              {:suit :hearts :rank 7}
+                                              {:suit :diamonds :rank 8}
+                                              {:suit :spades :rank 9}])
+                   (core/deal-room)
+                   (core/escape-room)
+                   (core/deal-room))]
+      (is (not (core/can-escape? game))))))
+
+(deftest test-escape-room
+  (let [room-cards [{:suit :clubs :rank 2}
+                    {:suit :hearts :rank 3}
+                    {:suit :diamonds :rank 4}
+                    {:suit :spades :rank 5}]
+        remaining  [{:suit :clubs :rank 6}
+                    {:suit :hearts :rank 7}]
+        game (-> (core/new-game-with-deck (concat room-cards remaining))
+                 (core/deal-room))
+        result (core/escape-room game)]
+    (testing "Room is cleared"
+      (is (empty? (:room result))))
+    (testing "Room cards go to bottom of dungeon"
+      (is (= (concat remaining room-cards) (:dungeon result))))
+    (testing "Phase transitions to room-draw"
+      (is (= :room-draw (:phase result))))
+    (testing "escaped-last-room is true"
+      (is (true? (:escaped-last-room result))))))
+
+(deftest test-escape-resets-after-normal-room
+  (let [game (-> (core/new-game-with-deck [{:suit :hearts :rank 2}
+                                            {:suit :hearts :rank 3}
+                                            {:suit :hearts :rank 4}
+                                            {:suit :hearts :rank 5}
+                                            {:suit :hearts :rank 6}
+                                            {:suit :hearts :rank 7}
+                                            {:suit :hearts :rank 8}
+                                            {:suit :hearts :rank 9}
+                                            {:suit :hearts :rank 10}
+                                            {:suit :diamonds :rank 2}
+                                            {:suit :diamonds :rank 3}
+                                            {:suit :diamonds :rank 4}])
+                 ;; Room 1: escape
+                 (core/deal-room)
+                 (core/escape-room)
+                 ;; Room 2: deal and resolve 2, then end normally
+                 (core/deal-room)
+                 (core/resolve-card 0 false)
+                 (core/resolve-card 0 false)
+                 (core/end-room)
+                 ;; Room 3: should be able to escape again
+                 (core/deal-room))]
+    (testing "Can escape again after a normal room completion"
+      (is (core/can-escape? game)))))
+
+;; ---------------------------------------------------------------------------
 ;; Win / lose scenarios
 ;; ---------------------------------------------------------------------------
 
@@ -376,7 +460,11 @@
     (testing "In room-action phase, can resolve any card"
       (let [actions (core/valid-actions game)
             resolve-actions (filter #(= :resolve-card (:action %)) actions)]
-        (is (= 4 (count resolve-actions)))))))
+        (is (= 4 (count resolve-actions)))))
+    (testing "Escape action is available in a fresh room"
+      (let [actions (core/valid-actions game)
+            escape-actions (filter #(= :escape-room (:action %)) actions)]
+        (is (= 1 (count escape-actions)))))))
 
 (deftest test-valid-actions-game-over
   (let [game {:phase :game-over :result :win}]
