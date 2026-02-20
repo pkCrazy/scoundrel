@@ -1,6 +1,7 @@
 .clj-kondo/
 .cpcache/
 .lsp/
+.calva/
 .shadow-cljs/
 node_modules/
 tests/
