@@ -2,7 +2,7 @@
   "scripts": {
     "css": "npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css --watch",
     "css:build": "npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css --minify",
-    "dev": "npm run css & shadow-cljs watch game",
+    "dev": "npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css && npx @tailwindcss/cli -i src/styles/main.css -o public/css/main.css --watch & shadow-cljs watch game",
     "test": "shadow-cljs compile test && node tests/tests.js"
   },
   "dependencies": {
