@@ -4,6 +4,7 @@
 
  :builds {:game {:target :browser
                  :modules {:main {:init-fn game.ui/init}}
+                 :module-hash-names true
                  :devtools {:http-root "public"
                             :http-port 3000}}
           :test {:target :node-test
