@@ -8,3 +8,5 @@ tests/
 
 public/js/
 public/css/
+
+.DS_Store
