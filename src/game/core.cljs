@@ -51,12 +51,12 @@
   {:dungeon              dungeon
    :room                 []
    :discard              []
+   :carried-over         []
    :hp                   20
    :max-hp               20
    :weapon               nil
    :weapon-last-used     nil
    :room-resolved        0
-   :room-monsters-skipped 0
    :escaped-last-room    false
    :phase                :room-draw
    :result               nil})
@@ -77,18 +77,21 @@
 
 (defn deal-room
   "Draws up to 4 cards from the dungeon into the room.
-   If dungeon and room are both empty, the player wins."
+   Any carried-over cards from the previous room are included.
+   If dungeon, room, and carried-over are all empty, the player wins."
   [game]
-  (let [dungeon (:dungeon game)
-        n       (min 4 (count dungeon))]
-    (if (and (zero? n) (empty? (:room game)))
+  (let [carried  (:carried-over game)
+        dungeon  (:dungeon game)
+        n        (min (- 4 (count carried)) (count dungeon))
+        new-room (vec (concat carried (take n dungeon)))]
+    (if (and (empty? new-room) (empty? (:room game)))
       (assoc game :phase :game-over :result :win)
       (assoc game
-             :room                 (vec (take n dungeon))
-             :dungeon              (vec (drop n dungeon))
-             :phase                :room-action
-             :room-resolved        0
-             :room-monsters-skipped 0))))
+             :room           new-room
+             :dungeon        (vec (drop n dungeon))
+             :carried-over   []
+             :phase          :room-action
+             :room-resolved  0))))
 
 ;; ---------------------------------------------------------------------------
 ;; Weapon eligibility
@@ -117,10 +120,15 @@
   (vec (concat (subvec room 0 idx) (subvec room (inc idx)))))
 
 (defn- check-room-cleared
-  "After resolving a card, check if the room is empty and dungeon is empty → win."
+  "After resolving a card, check if the room is empty.
+   If dungeon and carried-over are also empty → win.
+   If room is empty but cards remain → transition to :room-draw."
   [game]
-  (if (and (empty? (:room game)) (empty? (:dungeon game)))
-    (assoc game :phase :game-over :result :win)
+  (if (empty? (:room game))
+    (if (and (empty? (:dungeon game))
+             (empty? (:carried-over game)))
+      (assoc game :phase :game-over :result :win)
+      (assoc game :phase :room-draw))
     game))
 
 (defn- resolve-potion
@@ -184,24 +192,20 @@
   [game]
   (>= (:room-resolved game) 2))
 
-(defn count-monsters-in-room
-  "Returns the number of monster cards remaining in the room."
-  [game]
-  (count (filter #(= :monster (card-type %)) (:room game))))
-
 (defn can-skip-remaining?
   "Returns true if the player can end the room early.
-   Must have resolved >= 2 cards, and at most 1 monster can remain."
+   Must have resolved >= 2 cards, and exactly 1 card remains."
   [game]
   (and (can-end-room? game)
-       (<= (count-monsters-in-room game) 1)))
+       (= 1 (count (:room game)))))
 
 (defn end-room
-  "Ends the current room: remaining cards go to discard, phase → :room-draw."
+  "Ends the current room: the remaining card carries over to the next room,
+   phase → :room-draw."
   [game]
   (-> game
-      (update :discard into (:room game))
-      (assoc :room []
+      (assoc :carried-over (vec (:room game))
+             :room []
              :escaped-last-room false
              :phase :room-draw)))
 

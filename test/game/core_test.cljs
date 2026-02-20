@@ -99,9 +99,7 @@
     (testing "Phase transitions to :room-action"
       (is (= :room-action (:phase dealt))))
     (testing "Room resolved counter is 0"
-      (is (= 0 (:room-resolved dealt))))
-    (testing "Room monsters skipped is 0"
-      (is (= 0 (:room-monsters-skipped dealt))))))
+      (is (= 0 (:room-resolved dealt))))))
 
 (deftest test-deal-room-fewer-than-4
   (let [deck [{:suit :clubs :rank 2}
@@ -131,8 +129,7 @@
                                {:suit :spades :rank 6}]
                         :hp 15
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "Potion heals by card value"
       (is (= 20 (:hp result))))
@@ -146,8 +143,7 @@
                  (assoc :room [{:suit :hearts :rank 10}]
                         :hp 18
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "HP cannot exceed max-hp"
       (is (= 20 (:hp result))))))
@@ -161,8 +157,7 @@
                  (assoc :room [{:suit :diamonds :rank 7}
                                {:suit :clubs :rank 3}]
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "Weapon is equipped"
       (is (= {:suit :diamonds :rank 7} (:weapon result))))
@@ -178,8 +173,7 @@
                         :weapon {:suit :diamonds :rank 5}
                         :weapon-last-used 3
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "New weapon is equipped"
       (is (= {:suit :diamonds :rank 9} (:weapon result))))
@@ -198,8 +192,7 @@
                                {:suit :hearts :rank 3}]
                         :hp 20
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "Takes full damage without weapon"
       (is (= 12 (:hp result))))
@@ -214,8 +207,7 @@
                         :weapon {:suit :diamonds :rank 6}
                         :weapon-last-used nil
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 true)]
     (testing "Damage is reduced by weapon value"
       (is (= 18 (:hp result))))
@@ -229,8 +221,7 @@
                         :weapon {:suit :diamonds :rank 10}
                         :weapon-last-used nil
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 true)]
     (testing "Weapon stronger than monster → 0 damage"
       (is (= 20 (:hp result))))))
@@ -242,8 +233,7 @@
                         :weapon {:suit :diamonds :rank 10}
                         :weapon-last-used 8
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))]
+                        :room-resolved 0))]
     (testing "Can use weapon against monster with value < weapon-last-used"
       (is (core/can-use-weapon? game (first (:room game)))))
     (let [result (core/resolve-card game 0 true)]
@@ -256,8 +246,7 @@
                         :weapon {:suit :diamonds :rank 10}
                         :weapon-last-used 8
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))]
+                        :room-resolved 0))]
     (testing "Cannot use weapon against monster >= weapon-last-used"
       (is (not (core/can-use-weapon? game (first (:room game))))))))
 
@@ -266,8 +255,7 @@
                  (assoc :room [{:suit :spades :rank 14}]
                         :hp 10
                         :phase :room-action
-                        :room-resolved 0
-                        :room-monsters-skipped 0))
+                        :room-resolved 0))
         result (core/resolve-card game 0 false)]
     (testing "HP drops below 0 → game over, lose"
       (is (= :game-over (:phase result)))
@@ -280,27 +268,28 @@
 
 (deftest test-can-end-room
   (testing "Cannot end room with fewer than 2 resolved"
-    (let [game {:room-resolved 1 :room [{:suit :clubs :rank 2}] :room-monsters-skipped 0}]
+    (let [game {:room-resolved 1 :room [{:suit :clubs :rank 2}]}]
       (is (not (core/can-end-room? game)))))
   (testing "Can end room with 2+ resolved"
-    (let [game {:room-resolved 2 :room [{:suit :clubs :rank 2}] :room-monsters-skipped 0}]
+    (let [game {:room-resolved 2 :room [{:suit :clubs :rank 2}]}]
       (is (core/can-end-room? game)))))
 
 (deftest test-can-skip-remaining
-  (testing "Can skip when no monsters remain"
+  (testing "Can skip when exactly 1 card remains (non-monster)"
     (let [game {:room-resolved 2
-                :room [{:suit :hearts :rank 3}]
-                :room-monsters-skipped 0}]
+                :room [{:suit :hearts :rank 3}]}]
       (is (core/can-skip-remaining? game))))
-  (testing "Can skip when 1 monster remains"
+  (testing "Can skip when exactly 1 card remains (monster)"
     (let [game {:room-resolved 2
-                :room [{:suit :clubs :rank 5}]
-                :room-monsters-skipped 0}]
+                :room [{:suit :clubs :rank 5}]}]
       (is (core/can-skip-remaining? game))))
-  (testing "Cannot skip when 2 monsters remain"
+  (testing "Cannot skip when 2 cards remain"
     (let [game {:room-resolved 2
-                :room [{:suit :clubs :rank 5} {:suit :spades :rank 3}]
-                :room-monsters-skipped 0}]
+                :room [{:suit :clubs :rank 5} {:suit :spades :rank 3}]}]
+      (is (not (core/can-skip-remaining? game)))))
+  (testing "Cannot skip when 0 cards remain"
+    (let [game {:room-resolved 2
+                :room []}]
       (is (not (core/can-skip-remaining? game))))))
 
 (deftest test-end-room
@@ -310,12 +299,11 @@
                                             {:suit :spades :rank 4}])
                  (assoc :room [{:suit :hearts :rank 5}]
                         :room-resolved 3
-                        :room-monsters-skipped 0
                         :phase :room-action))
         result (core/end-room game)]
-    (testing "Remaining room cards go to discard"
+    (testing "Remaining room card goes to carried-over"
       (is (empty? (:room result)))
-      (is (some #(= {:suit :hearts :rank 5} %) (:discard result))))
+      (is (= [{:suit :hearts :rank 5}] (:carried-over result))))
     (testing "Phase transitions to room-draw"
       (is (= :room-draw (:phase result))))))
 
@@ -393,8 +381,9 @@
                  ;; Room 1: escape
                  (core/deal-room)
                  (core/escape-room)
-                 ;; Room 2: deal and resolve 2, then end normally
+                 ;; Room 2: deal and resolve 3, then end (1 card carries over)
                  (core/deal-room)
+                 (core/resolve-card 0 false)
                  (core/resolve-card 0 false)
                  (core/resolve-card 0 false)
                  (core/end-room)
@@ -470,3 +459,55 @@
   (let [game {:phase :game-over :result :win}]
     (testing "No actions when game is over"
       (is (empty? (core/valid-actions game))))))
+
+;; ---------------------------------------------------------------------------
+;; Carry-over integration
+;; ---------------------------------------------------------------------------
+
+(deftest test-carry-over-card-appears-in-next-room
+  (let [;; 8-card dungeon: room 1 gets first 4, room 2 gets remaining
+        deck [{:suit :hearts :rank 2}
+              {:suit :hearts :rank 3}
+              {:suit :hearts :rank 4}
+              {:suit :clubs :rank 6}    ;; this monster will be carried over
+              {:suit :spades :rank 7}
+              {:suit :diamonds :rank 8}
+              {:suit :hearts :rank 9}
+              {:suit :clubs :rank 10}]
+        game (-> (core/new-game-with-deck deck)
+                 (core/deal-room)
+                 ;; Resolve first 3 cards (potions), leaving the monster
+                 (core/resolve-card 0 false)
+                 (core/resolve-card 0 false)
+                 (core/resolve-card 0 false))]
+    (testing "Can skip with 1 card remaining"
+      (is (core/can-skip-remaining? game))
+      (is (= [{:suit :clubs :rank 6}] (:room game))))
+    (let [after-end (core/end-room game)]
+      (testing "Remaining card goes to carried-over, not discard"
+        (is (= [{:suit :clubs :rank 6}] (:carried-over after-end)))
+        (is (not (some #(= {:suit :clubs :rank 6} %) (:discard after-end)))))
+      (let [next-room (core/deal-room after-end)]
+        (testing "Carried-over card appears in next room"
+          (is (some #(= {:suit :clubs :rank 6} %) (:room next-room))))
+        (testing "Room has 4 cards total (1 carried + 3 from dungeon)"
+          (is (= 4 (count (:room next-room)))))
+        (testing "Carried-over is cleared"
+          (is (empty? (:carried-over next-room))))
+        (testing "Dungeon has 1 card left (4 original - 3 dealt)"
+          (is (= 1 (count (:dungeon next-room)))))))))
+
+(deftest test-deal-room-with-carried-over
+  (let [game (-> (core/new-game-with-deck [{:suit :spades :rank 7}
+                                            {:suit :diamonds :rank 8}
+                                            {:suit :hearts :rank 9}])
+                 (assoc :carried-over [{:suit :clubs :rank 6}]))
+        dealt (core/deal-room game)]
+    (testing "Carried-over card is first in room"
+      (is (= {:suit :clubs :rank 6} (first (:room dealt)))))
+    (testing "Room has 4 cards (1 carried + 3 from dungeon)"
+      (is (= 4 (count (:room dealt)))))
+    (testing "Dungeon is empty"
+      (is (empty? (:dungeon dealt))))
+    (testing "Carried-over is cleared"
+      (is (empty? (:carried-over dealt))))))
