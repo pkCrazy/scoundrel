@@ -1,6 +1,6 @@
 # Scoundrel
 
-A solo dungeon-crawler card game built with ClojureScript, Reagent, and Tailwind CSS. Draw rooms, fight monsters, equip weapons, and drink potions to survive the dungeon. Installable as a Progressive Web App (PWA).
+A solo dungeon-crawler card game built with ClojureScript, Reagent, and Tailwind CSS. Draw rooms, fight monsters, equip weapons, and drink potions to survive the dungeon. Installable as a Progressive Web App (PWA). You can try it at [https://pkcrazy.github.io/scoundrel/](https://pkcrazy.github.io/scoundrel/)
 
 ## Rules
 
@@ -12,7 +12,7 @@ Scoundrel uses a modified 44-card deck (standard 52 minus the 6 red face cards a
 | ♦ Diamonds       | Weapon    | Equip as your weapon (replaces any existing weapon)            |
 | ♣ Clubs / ♠ Spades | Monster | Deal damage equal to rank, reduced by equipped weapon value |
 
-Each turn a **room** of 4 cards is drawn. You must resolve at least 2 cards before you can end the room. Any remaining card carries over to the next room.
+Each turn a **room** of 4 cards is drawn. You must resolve at least 3 cards before you can end the room. Any remaining card carries over to the next room.
 
 - **Weapons** can only be used against a monster whose value is strictly less than the last monster you used the weapon on (resets when you equip a new weapon).
 - **Escape** — you may flee a room without resolving any cards, but you cannot escape two rooms in a row.
