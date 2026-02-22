@@ -3,10 +3,10 @@ const CACHE_NAME = 'scoundrel-v1';
 
 // App shell to precache on install
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/css/main.css',
-  '/manifest.json'
+  './',
+  './index.html',
+  './css/main.css',
+  './manifest.json'
 ];
 
 // Install: precache the app shell
@@ -51,7 +51,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match('/index.html'))
+        .catch(() => caches.match('./index.html'))
     );
     return;
   }
